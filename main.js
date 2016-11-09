@@ -16,11 +16,15 @@ window.addEventListener('load', function() {
 
     var elements = {
         txtPower: document.querySelector("#res-power"),
+        divUpgrades: document.querySelector("#upgrades"), 
         txtCompBase: document.querySelector("#comp-base"),
         btnCompBase: document.querySelector("#upgrade-comp-base"),
         txtCompPerc: document.querySelector("#comp-perc"),
         btnCompPerc: document.querySelector("#upgrade-comp-perc")
     };
+    
+    elements.divUpgrades.style.display = "none";
+    
     
     function Resource(name,value){
         this.name = name;
@@ -32,7 +36,7 @@ window.addEventListener('load', function() {
     }
     
     var resPower = new Power(0);
-    var compBaseUpgrade = new Power(50);
+    var compBaseUpgrade = new Power(10);
     var compPercUpgrade = new Power(200);
     
     var compUpgrades = {
@@ -42,9 +46,9 @@ window.addEventListener('load', function() {
             value: 1,
         },
         percUpgrade: {
-            count: 1,
+            count: 0,
             cost: compPercUpgrade,
-            value: 100, // percent
+            value: 5, // percent
         }
     }
     
@@ -61,7 +65,7 @@ window.addEventListener('load', function() {
     elements.btnCompPerc.addEventListener('click', function(evt) {
         if (resPower.value < compUpgrades.percUpgrade.cost.value) return;
         
-        compUpgrades.percUpgrade.value += 5;
+        compUpgrades.percUpgrade.count += 1;
         resPower.value -= compUpgrades.percUpgrade.cost.value;
         compUpgrades.percUpgrade.cost.value = Math.ceil(compUpgrades.percUpgrade.cost.value * 2.5);
         updateCompPercText();
@@ -69,27 +73,31 @@ window.addEventListener('load', function() {
     });
     
     function updateCompBaseText() {
-        elements.txtCompBase.innerHTML = "{0} *{1}".format(compUpgrades.baseUpgrade.count,compUpgrades.baseUpgrade.value);
+        elements.txtCompBase.innerHTML = "{0} x {1}".format(compUpgrades.baseUpgrade.count,compUpgrades.baseUpgrade.value);
         elements.btnCompBase.innerHTML = "Upgrade (" + compUpgrades.baseUpgrade.cost.value + ")";
-        elements.btnCompBase.disabled = Boolean(resPower.value <= compUpgrades.baseUpgrade.cost.value);
+        elements.btnCompBase.disabled = Boolean(resPower.value < compUpgrades.baseUpgrade.cost.value);
+        
+        if (elements.divUpgrades.style.display === "none" && resPower.value >= compUpgrades.baseUpgrade.cost.value){
+            elements.divUpgrades.style.display = "block";
+        }
     }
     
     function updateCompPercText() {
-        elements.txtCompPerc.innerHTML = "{0}%".format(compUpgrades.percUpgrade.value);
+        elements.txtCompPerc.innerHTML = "{0} x {1}%".format(compUpgrades.percUpgrade.count,compUpgrades.percUpgrade.value);
         elements.btnCompPerc.innerHTML = "Upgrade (" + compUpgrades.percUpgrade.cost.value + ")";
-        elements.btnCompPerc.disabled = Boolean(resPower.value <= compUpgrades.percUpgrade.cost.value);
+        elements.btnCompPerc.disabled = Boolean(resPower.value < compUpgrades.percUpgrade.cost.value);
     }
     
     function getPowerGain(){
         return {
         base: compUpgrades.baseUpgrade.count * compUpgrades.baseUpgrade.value, 
-        perc: compUpgrades.percUpgrade.value
+        perc: 100 + compUpgrades.percUpgrade.count * compUpgrades.percUpgrade.value
         };
     }
     
     function updatePowerText() {
         var gain = getPowerGain();
-        var powerText = "{0} (+{1} * {2}%)".format(toFixed(resPower.value,2),gain.base,gain.perc);
+        var powerText = "{0} (+{1} x {2}%)".format(toFixed(resPower.value,2),gain.base,gain.perc);
         elements.txtPower.innerHTML = powerText;
         
         updateCompBaseText();
@@ -106,7 +114,7 @@ window.addEventListener('load', function() {
     
     function gameLoop() {
         updatePower();
-        window.setTimeout(gameLoop, 100);
+        window.setTimeout(gameLoop, 1000);
     }
     
     updateCompBaseText();
